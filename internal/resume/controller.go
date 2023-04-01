@@ -12,6 +12,7 @@ import (
 	"resume-service/internal/database"
 	"resume-service/internal/model"
 	"resume-service/internal/utils"
+	"strconv"
 	"time"
 )
 
@@ -73,7 +74,15 @@ func (r *ResumeController) UploadResume(c *gin.Context) {
 }
 
 func (r *ResumeController) ListResumes(c *gin.Context) {
-	// Implement resume list logic here
+	userId := auth.GetUserIdFromContext(c)
+
+	resumes, err := r.resumeStore.GetResumesByUserId(c, userId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"resumes": resumes})
 }
 
 func (r *ResumeController) DownloadResume(c *gin.Context) {
@@ -105,6 +114,24 @@ func (r *ResumeController) DownloadResume(c *gin.Context) {
 	c.Data(http.StatusOK, "application/pdf", file)
 }
 
-func (rc *ResumeController) MarkResumePublic(c *gin.Context) {
-	// Implement marking resume as public logic here
+func (r *ResumeController) UpdateResumeVisibility(c *gin.Context) {
+	userId := auth.GetUserIdFromContext(c)
+	resumeId := c.Param("resume_id")
+	if resumeId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "resume_id not found"})
+		return
+	}
+
+	isPublic, err := strconv.ParseBool(c.DefaultQuery("public", "false"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	err = r.resumeStore.UpdateUserResumeIsPublic(c, userId, resumeId, isPublic)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Resume visibility updated"})
 }

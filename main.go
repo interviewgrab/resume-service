@@ -46,7 +46,7 @@ func main() {
 		authRoutes.PUT("/upload-resume", resumeController.UploadResume)
 		authRoutes.GET("/list-resumes", resumeController.ListResumes)
 		authRoutes.GET("/download-resume/:resume_id", resumeController.DownloadResume)
-		authRoutes.POST("/mark-resume-public/:resume_id", resumeController.MarkResumePublic)
+		authRoutes.POST("/update-resume-visibility/:resume_id", resumeController.UpdateResumeVisibility)
 		authRoutes.POST("/logout", userController.Logout)
 	}
 

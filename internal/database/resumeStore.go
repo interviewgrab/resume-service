@@ -35,3 +35,30 @@ func (s *ResumeStore) GetResume(ctx context.Context, id string) (model.Resume, e
 	}
 	return *resume, err
 }
+
+func (s *ResumeStore) GetResumesByUserId(ctx context.Context, userId primitive.ObjectID) ([]model.Resume, error) {
+	cursor, err := s.collection.Find(ctx, bson.M{"user_id": userId})
+	if err != nil {
+		return nil, err
+	}
+
+	var resumes []model.Resume
+	if err = cursor.All(ctx, &resumes); err != nil {
+		return nil, err
+	}
+
+	return resumes, nil
+}
+
+func (s *ResumeStore) UpdateUserResumeIsPublic(ctx context.Context, userId primitive.ObjectID, id string, isPublic bool) error {
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	result := s.collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": objectId, "user_id": userId},
+		bson.M{"$set": bson.M{"public": isPublic}},
+	)
+	return result.Err()
+}
