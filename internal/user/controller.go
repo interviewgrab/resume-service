@@ -2,13 +2,14 @@
 package user
 
 import (
-	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"resume-service/internal/auth"
 	"resume-service/internal/database"
 	"resume-service/internal/model"
 	"resume-service/internal/utils"
+
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserController struct {
@@ -20,21 +21,29 @@ func NewUserController(store *database.UserStore) *UserController {
 }
 
 func (uc *UserController) Signup(c *gin.Context) {
-	var newUser model.User
+	var request struct {
+		Name     string `json:"name" binding:"required"`
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
 
-	if err := c.ShouldBindJSON(&newUser); err != nil {
+	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, utils.GinError(err))
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.GinError(err))
 		return
 	}
 
-	newUser.Password = string(hashedPassword)
-	newUser, err = uc.userStore.CreateUser(c, newUser)
+	request.Password = string(hashedPassword)
+	newUser, err := uc.userStore.CreateUser(c, model.User{
+		Name:     request.Name,
+		Email:    request.Email,
+		Password: request.Password,
+	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.GinError(err))
 		return
