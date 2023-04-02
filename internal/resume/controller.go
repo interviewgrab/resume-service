@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"resume-service/internal/auth"
 	"resume-service/internal/clients/filestore"
+	"resume-service/internal/clients/mlclient"
 	"resume-service/internal/database"
 	"resume-service/internal/model"
 	"resume-service/internal/utils"
@@ -19,10 +20,11 @@ import (
 type ResumeController struct {
 	fileStorage *filestore.FileStore
 	resumeStore *database.ResumeStore
+	mlclient    *mlclient.MLClient
 }
 
-func NewResumeController(fileStorage *filestore.FileStore, store *database.ResumeStore) *ResumeController {
-	return &ResumeController{fileStorage: fileStorage, resumeStore: store}
+func NewResumeController(fileStorage *filestore.FileStore, store *database.ResumeStore, mlclient *mlclient.MLClient) *ResumeController {
+	return &ResumeController{fileStorage: fileStorage, resumeStore: store, mlclient: mlclient}
 }
 
 func (r *ResumeController) UploadResume(c *gin.Context) {
@@ -134,4 +136,56 @@ func (r *ResumeController) UpdateResumeVisibility(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Resume visibility updated"})
+}
+
+func (r *ResumeController) GenerateCoverletter(c *gin.Context) {
+	var request struct {
+		ResumeId string `json:"resume_id"`
+		JobDesc  string `json:"job_desc"`
+	}
+
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, utils.GinError(err))
+		return
+	}
+
+	if request.ResumeId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Resume ID and Job Description are required"})
+		return
+	}
+
+	resume, err := r.resumeStore.GetResume(c, request.ResumeId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	// verify if user can read this resume
+	if resume.UserID != auth.GetUserIdFromContext(c) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// download PDF from S3
+	fileContent, err := r.fileStorage.Download(resume.Key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	// Extract text from the PDF
+	resumeText, err := parsePDF(fileContent)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse resume text"})
+		return
+	}
+
+	// Generate the cover letter
+	coverLetter, err := r.mlclient.GenerateCoverLetter(c, request.JobDesc, resumeText)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate cover letter"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"cover_letter": coverLetter})
 }
