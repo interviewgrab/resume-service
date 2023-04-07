@@ -56,7 +56,7 @@ func (s *ResumeStore) GetResumesByUserId(ctx context.Context, userId primitive.O
 		return nil, err
 	}
 
-	var resumes []model.Resume
+	resumes := []model.Resume{}
 	if err = cursor.All(ctx, &resumes); err != nil {
 		return nil, err
 	}

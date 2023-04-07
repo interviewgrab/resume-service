@@ -73,7 +73,7 @@ func (r *ResumeController) UploadResume(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": "Resume uploaded successfully"})
+	c.JSON(http.StatusOK, gin.H{"result": resume})
 }
 
 func (r *ResumeController) ListResumes(c *gin.Context) {
