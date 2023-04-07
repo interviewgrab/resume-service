@@ -2,10 +2,11 @@ package database
 
 import (
 	"context"
+	"resume-service/internal/model"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"resume-service/internal/model"
 )
 
 type ResumeStore struct {
@@ -34,6 +35,19 @@ func (s *ResumeStore) GetResume(ctx context.Context, id string) (model.Resume, e
 		return model.Resume{}, err
 	}
 	return *resume, err
+}
+
+func (s *ResumeStore) DeleteResume(ctx context.Context, userId primitive.ObjectID, id string) error {
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{"_id": objectId, "user_id": userId}
+	_, err = s.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func (s *ResumeStore) GetResumesByUserId(ctx context.Context, userId primitive.ObjectID) ([]model.Resume, error) {

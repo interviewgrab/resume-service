@@ -66,6 +66,7 @@ func main() {
 		authRoutes.PUT("/upload-resume", resumeController.UploadResume)
 		authRoutes.GET("/list-resumes", resumeController.ListResumes)
 		authRoutes.GET("/download-resume/:resume_id", resumeController.DownloadResume)
+		authRoutes.DELETE("/delete-resume/:resume_id", resumeController.DeleteResume)
 		authRoutes.POST("/update-resume-visibility/:resume_id", resumeController.UpdateResumeVisibility)
 		authRoutes.POST("/generate-cover-letter", resumeController.GenerateCoverletter)
 	}

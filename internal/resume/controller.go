@@ -117,6 +117,23 @@ func (r *ResumeController) DownloadResume(c *gin.Context) {
 	c.Data(http.StatusOK, "application/pdf", file)
 }
 
+func (r *ResumeController) DeleteResume(c *gin.Context) {
+	resumeId := c.Param("resume_id")
+	if resumeId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Now resume id found"})
+		return
+	}
+
+	userId := auth.GetUserIdFromContext(c)
+	err := r.resumeStore.DeleteResume(c, userId, resumeId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "delete successful"})
+}
+
 func (r *ResumeController) UpdateResumeVisibility(c *gin.Context) {
 	userId := auth.GetUserIdFromContext(c)
 	resumeId := c.Param("resume_id")
