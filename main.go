@@ -16,8 +16,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const ()
-
 func main() {
 	err := godotenv.Load(".keys")
 	if err != nil {

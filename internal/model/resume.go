@@ -12,6 +12,6 @@ type Resume struct {
 	FileName   string             `bson:"file_name,required" json:"file_name"`
 	Key        string             `bson:"key,required" json:"key"`
 	UploadDate time.Time          `bson:"upload_date,required" json:"upload_date"`
-	Metadata   map[string]string  `bson:"metadata,omitempty" json:"metadata"`
+	Tags       []string           `bson:"tags,omitempty" json:"tags"`
 	Public     bool               `bson:"public,required" json:"public"`
 }

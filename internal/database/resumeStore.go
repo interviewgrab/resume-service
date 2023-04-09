@@ -19,9 +19,13 @@ func newResumeStore(dbClient *mongo.Database) (ResumeStore, error) {
 	return ResumeStore{collection: dbClient.Collection(resumeCollection)}, nil
 }
 
-func (s *ResumeStore) StoreResume(ctx context.Context, resume model.Resume) error {
-	_, err := s.collection.InsertOne(ctx, resume)
-	return err
+func (s *ResumeStore) StoreResume(ctx context.Context, resume model.Resume) (model.Resume, error) {
+	storeResult, err := s.collection.InsertOne(ctx, resume)
+	if err != nil {
+		return model.Resume{}, err
+	}
+	resume.ID = storeResult.InsertedID.(primitive.ObjectID)
+	return resume, err
 }
 
 func (s *ResumeStore) GetResume(ctx context.Context, id string) (model.Resume, error) {

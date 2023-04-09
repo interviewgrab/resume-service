@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"resume-service/internal/auth"
 	"resume-service/internal/clients/filestore"
@@ -12,6 +13,7 @@ import (
 	"resume-service/internal/model"
 	"resume-service/internal/utils"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,12 +31,15 @@ func NewResumeController(fileStorage *filestore.FileStore, store *database.Resum
 }
 
 func (r *ResumeController) UploadResume(c *gin.Context) {
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
+	var request struct {
+		File *multipart.FileHeader `form:"file"`
+		Tags []string              `form:"tags"`
+	}
+	if err := c.ShouldBind(&request); err != nil {
 		c.JSON(http.StatusInternalServerError, utils.GinError(err))
 		return
 	}
-	file, err := fileHeader.Open()
+	file, err := request.File.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.GinError(err))
 		return
@@ -44,6 +49,13 @@ func (r *ResumeController) UploadResume(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.GinError(err))
 		return
+	}
+
+	tags := []string{}
+	if request.Tags != nil && len(request.Tags) > 0 {
+		for _, tag := range request.Tags {
+			tags = append(tags, strings.ReplaceAll(tag, " ", ""))
+		}
 	}
 
 	key := fmt.Sprintf("user-%s-%s", auth.GetUserIdFromContext(c).String(), uuid.New())
@@ -60,20 +72,20 @@ func (r *ResumeController) UploadResume(c *gin.Context) {
 	}
 	resume := model.Resume{
 		UserID:     auth.GetUserIdFromContext(c),
-		FileName:   fileHeader.Filename,
+		FileName:   request.File.Filename,
 		Key:        key,
 		UploadDate: time.Now(),
-		Metadata:   map[string]string{},
+		Tags:       tags,
 		Public:     false,
 	}
 
-	err = r.resumeStore.StoreResume(c, resume)
+	resume, err = r.resumeStore.StoreResume(c, resume)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.GinError(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": resume})
+	c.JSON(http.StatusOK, gin.H{"resume": resume})
 }
 
 func (r *ResumeController) ListResumes(c *gin.Context) {
