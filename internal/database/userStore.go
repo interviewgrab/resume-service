@@ -2,11 +2,13 @@ package database
 
 import (
 	"context"
+	"log"
+	"resume-service/internal/model"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
-	"resume-service/internal/model"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type UserStore struct {
@@ -15,8 +17,23 @@ type UserStore struct {
 
 const userCollection = "users"
 
-func newUserStore(dbClient *mongo.Database) (UserStore, error) {
-	return UserStore{collection: dbClient.Collection(userCollection)}, nil
+func newUserStore(ctx context.Context, dbClient *mongo.Database) (UserStore, error) {
+	collection := dbClient.Collection(userCollection)
+	err := createUserIndexes(ctx, collection)
+	if err != nil {
+		return UserStore{}, err
+	}
+	return UserStore{collection: collection}, nil
+}
+
+func createUserIndexes(ctx context.Context, collection *mongo.Collection) error {
+	mod := mongo.IndexModel{
+		Keys:    bson.M{"email": 1},
+		Options: options.Index().SetUnique(true),
+	}
+
+	_, err := collection.Indexes().CreateOne(ctx, mod)
+	return err
 }
 
 func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (model.User, error) {

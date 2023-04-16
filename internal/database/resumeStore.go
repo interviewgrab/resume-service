@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ResumeStore struct {
@@ -15,8 +16,23 @@ type ResumeStore struct {
 
 const resumeCollection = "resumeCollection"
 
-func newResumeStore(dbClient *mongo.Database) (ResumeStore, error) {
-	return ResumeStore{collection: dbClient.Collection(resumeCollection)}, nil
+func newResumeStore(ctx context.Context, dbClient *mongo.Database) (ResumeStore, error) {
+	collection := dbClient.Collection(resumeCollection)
+	err := createResumeIndexes(ctx, collection)
+	if err != nil {
+		return ResumeStore{}, err
+	}
+	return ResumeStore{collection: collection}, nil
+}
+
+func createResumeIndexes(ctx context.Context, collection *mongo.Collection) error {
+	mod := mongo.IndexModel{
+		Keys:    bson.M{"key": 1},
+		Options: options.Index().SetUnique(true),
+	}
+
+	_, err := collection.Indexes().CreateOne(ctx, mod)
+	return err
 }
 
 func (s *ResumeStore) StoreResume(ctx context.Context, resume model.Resume) (model.Resume, error) {

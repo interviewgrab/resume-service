@@ -2,10 +2,11 @@ package database
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"os"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type DB struct {
@@ -28,8 +29,8 @@ func NewClient(ctx context.Context) (*DB, error) {
 		return nil, err
 	}
 	database := connection.Database(dbName)
-	userStore, err := newUserStore(database)
-	resumeStore, err := newResumeStore(database)
+	userStore, err := newUserStore(ctx, database)
+	resumeStore, err := newResumeStore(ctx, database)
 	return &DB{
 		client: connection,
 		User:   userStore,
