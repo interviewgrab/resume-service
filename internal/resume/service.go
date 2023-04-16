@@ -2,9 +2,10 @@ package resume
 
 import (
 	"bytes"
+	"strings"
+
 	"github.com/unidoc/unipdf/v3/extractor"
 	"github.com/unidoc/unipdf/v3/model"
-	"strings"
 )
 
 func parsePDF(fileContent []byte) (string, error) {

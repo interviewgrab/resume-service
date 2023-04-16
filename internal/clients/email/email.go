@@ -3,6 +3,7 @@ package email
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/Shopify/gomail"
@@ -29,12 +30,12 @@ func NewClient() (*EmailClient, error) {
 	return &EmailClient{from: email, sendCloser: &sendCloser}, nil
 }
 
-func (c *EmailClient) SendMail(to string) error {
+func (c *EmailClient) SendMail(to string, otp string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", c.from)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "Welcome to resume-service!")
-	m.SetBody("text/html", "<h1>Welcome to resume service</h1><br/><p>Your OTP is 123456</p>")
+	m.SetBody("text/html", fmt.Sprintf("<h1>Welcome to resume service</h1><br/><p>Your OTP is %s</p>", otp))
 
 	return gomail.Send(*c.sendCloser, m)
 }

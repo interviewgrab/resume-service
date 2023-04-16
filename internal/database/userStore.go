@@ -36,6 +36,21 @@ func createUserIndexes(ctx context.Context, collection *mongo.Collection) error 
 	return err
 }
 
+func (s *UserStore) GetUser(ctx context.Context, userId primitive.ObjectID) (model.User, error) {
+	user := &model.User{}
+	filter := bson.M{"_id": userId}
+	err := s.collection.FindOne(ctx, filter).Decode(user)
+
+	if err != nil {
+		if !IsNotFound(err) {
+			log.Println("Error finding user", err)
+		}
+		return *user, err
+	}
+
+	return *user, nil
+}
+
 func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (model.User, error) {
 	user := &model.User{}
 	filter := bson.M{"email": email}
@@ -58,6 +73,24 @@ func (s *UserStore) CreateUser(ctx context.Context, user model.User) (model.User
 	}
 	user.ID = res.InsertedID.(primitive.ObjectID)
 	return user, nil
+}
+
+func (s *UserStore) ResetEmailOTP(ctx context.Context, userId primitive.ObjectID, otp string) error {
+	result := s.collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": userId},
+		bson.M{"$set": bson.M{"email_otp": otp}},
+	)
+	return result.Err()
+}
+
+func (s *UserStore) VerifyEmail(ctx context.Context, userId primitive.ObjectID, otp string) error {
+	result := s.collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": userId, "email_otp": otp},
+		bson.M{"$set": bson.M{"email_verified": true, "email_otp": ""}},
+	)
+	return result.Err()
 }
 
 func IsNotFound(err error) bool {

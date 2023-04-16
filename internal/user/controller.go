@@ -41,11 +41,19 @@ func (uc *UserController) Signup(c *gin.Context) {
 		return
 	}
 
+	otp, err := GenerateOTP(6)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
 	request.Password = string(hashedPassword)
 	newUser, err := uc.userStore.CreateUser(c, model.User{
-		Name:     request.Name,
-		Email:    request.Email,
-		Password: request.Password,
+		Name:          request.Name,
+		Email:         request.Email,
+		Password:      request.Password,
+		EmailVerified: false,
+		EmailToken:    otp,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.GinError(err))
@@ -58,7 +66,7 @@ func (uc *UserController) Signup(c *gin.Context) {
 		return
 	}
 
-	err = uc.emailClient.SendMail(request.Email)
+	err = uc.emailClient.SendMail(request.Email, otp)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.GinError(err))
 		return
@@ -99,6 +107,35 @@ func (uc *UserController) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, ginToken(token))
 }
 
+func (u *UserController) ResendOTP(c *gin.Context) {
+	userId := auth.GetUserIdFromContext(c)
+	user, err := u.userStore.GetUser(c, userId)
+
+	if user.EmailVerified {
+		c.JSON(http.StatusAlreadyReported, utils.GinError(errors.New("email already verified")))
+		return
+	}
+
+	otp, err := GenerateOTP(6)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	err = u.emailClient.SendMail(user.Email, otp)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	err = u.userStore.ResetEmailOTP(c, userId, otp)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"otp_resent": true})
+}
+
 func (u *UserController) VerifyEmail(c *gin.Context) {
 	var request struct {
 		OTP string `json:"otp" binding:"required"`
@@ -109,8 +146,11 @@ func (u *UserController) VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	if request.OTP != "123456" {
-		c.JSON(http.StatusUnauthorized, utils.GinError(errors.New("Invalid OTP")))
+	userId := auth.GetUserIdFromContext(c)
+
+	err := u.userStore.VerifyEmail(c, userId, request.OTP)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.GinError(err))
 		return
 	}
 	c.JSON(http.StatusAccepted, gin.H{"email_verified": true})

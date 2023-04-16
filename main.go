@@ -68,6 +68,7 @@ func main() {
 	{
 		authRoutes.POST("/logout", userController.Logout)
 		authRoutes.POST("/verify-email", userController.VerifyEmail)
+		authRoutes.GET("/resend-otp", userController.ResendOTP)
 		authRoutes.PUT("/upload-resume", resumeController.UploadResume)
 		authRoutes.GET("/list-resumes", resumeController.ListResumes)
 		authRoutes.GET("/download-resume/:resume_id", resumeController.DownloadResume)
