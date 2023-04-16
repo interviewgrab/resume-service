@@ -23,7 +23,7 @@ func NewClient() (*EmailClient, error) {
 	d := gomail.NewDialer("smtp.gmail.com", 587, email, password)
 	sendCloser, err := d.Dial()
 	if err != nil {
-		return nil, errors.New("Unable to setup email-client, check your email / password")
+		return nil, errors.Join(errors.New("Unable to setup email-client, check your email / password"), err)
 	}
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	return &EmailClient{from: email, sendCloser: &sendCloser}, nil

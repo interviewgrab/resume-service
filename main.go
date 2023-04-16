@@ -39,7 +39,7 @@ func main() {
 
 	mailClient, err := email.NewClient()
 	if mailClient == nil {
-		log.Fatal("Cannot create mail client")
+		log.Fatal("Cannot create mail client", err)
 	}
 
 	// Initialize Gin

@@ -30,7 +30,13 @@ func NewClient(ctx context.Context) (*DB, error) {
 	}
 	database := connection.Database(dbName)
 	userStore, err := newUserStore(ctx, database)
+	if err != nil {
+		return nil, err
+	}
 	resumeStore, err := newResumeStore(ctx, database)
+	if err != nil {
+		return nil, err
+	}
 	return &DB{
 		client: connection,
 		User:   userStore,
