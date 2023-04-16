@@ -58,23 +58,27 @@ func main() {
 	resumeController := resume.NewResumeController(fileStore, &store.Resume, mlClient)
 
 	// Set up routes
-	publicRoutes := r.Group("/api")
+	userPublicRoutes := r.Group("/api")
 	{
-		publicRoutes.POST("/signup", userController.Signup)
-		publicRoutes.POST("/login", userController.Login)
+		userPublicRoutes.POST("/signup", userController.Signup)
+		userPublicRoutes.POST("/login", userController.Login)
 	}
 
-	authRoutes := r.Group("/api", auth.Middleware())
+	userAuthedRoutes := r.Group("/api", auth.Middleware())
 	{
-		authRoutes.POST("/logout", userController.Logout)
-		authRoutes.POST("/verify-email", userController.VerifyEmail)
-		authRoutes.GET("/resend-otp", userController.ResendOTP)
-		authRoutes.PUT("/upload-resume", resumeController.UploadResume)
-		authRoutes.GET("/list-resumes", resumeController.ListResumes)
-		authRoutes.GET("/download-resume/:resume_id", resumeController.DownloadResume)
-		authRoutes.DELETE("/delete-resume/:resume_id", resumeController.DeleteResume)
-		authRoutes.POST("/update-resume-visibility/:resume_id", resumeController.UpdateResumeVisibility)
-		authRoutes.POST("/generate-cover-letter", resumeController.GenerateCoverletter)
+		userAuthedRoutes.POST("/logout", userController.Logout)
+		userAuthedRoutes.POST("/verify-email", userController.VerifyEmail)
+		userAuthedRoutes.GET("/resend-otp", userController.ResendOTP)
+	}
+
+	resumeRoutes := r.Group("/api", auth.Middleware(), auth.EmailVerified(&store.User))
+	{
+		resumeRoutes.PUT("/upload-resume", resumeController.UploadResume)
+		resumeRoutes.GET("/list-resumes", resumeController.ListResumes)
+		resumeRoutes.GET("/download-resume/:resume_id", resumeController.DownloadResume)
+		resumeRoutes.DELETE("/delete-resume/:resume_id", resumeController.DeleteResume)
+		resumeRoutes.POST("/update-resume-visibility/:resume_id", resumeController.UpdateResumeVisibility)
+		resumeRoutes.POST("/generate-cover-letter", resumeController.GenerateCoverletter)
 	}
 
 	// Start server
