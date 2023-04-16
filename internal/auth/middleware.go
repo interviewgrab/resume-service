@@ -19,7 +19,7 @@ func Middleware() gin.HandlerFunc {
 		authHeader := c.GetHeader(authorizationHeader)
 
 		if authHeader == "" || !strings.HasPrefix(authHeader, bearerTokenPrefix) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error_code": "invalid_login"})
 			return
 		}
 
@@ -33,13 +33,13 @@ func Middleware() gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error_code": "invalid_login"})
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error_code": "invalid_login"})
 			return
 		}
 
