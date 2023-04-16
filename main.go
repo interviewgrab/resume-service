@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"resume-service/internal/auth"
+	"resume-service/internal/clients/email"
 	"resume-service/internal/clients/filestore"
 	"resume-service/internal/clients/mlclient"
 	"resume-service/internal/database"
@@ -36,6 +37,11 @@ func main() {
 		log.Fatal("Cannot create ML client")
 	}
 
+	mailClient, err := email.NewClient()
+	if mailClient == nil {
+		log.Fatal("Cannot create mail client")
+	}
+
 	// Initialize Gin
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -48,7 +54,7 @@ func main() {
 	}))
 
 	// Initialize controllers
-	userController := user.NewUserController(&store.User)
+	userController := user.NewUserController(&store.User, mailClient)
 	resumeController := resume.NewResumeController(fileStore, &store.Resume, mlClient)
 
 	// Set up routes
@@ -61,6 +67,7 @@ func main() {
 	authRoutes := r.Group("/api", auth.Middleware())
 	{
 		authRoutes.POST("/logout", userController.Logout)
+		authRoutes.POST("/verify-email", userController.VerifyEmail)
 		authRoutes.PUT("/upload-resume", resumeController.UploadResume)
 		authRoutes.GET("/list-resumes", resumeController.ListResumes)
 		authRoutes.GET("/download-resume/:resume_id", resumeController.DownloadResume)

@@ -2,8 +2,10 @@
 package user
 
 import (
+	"errors"
 	"net/http"
 	"resume-service/internal/auth"
+	"resume-service/internal/clients/email"
 	"resume-service/internal/database"
 	"resume-service/internal/model"
 	"resume-service/internal/utils"
@@ -13,11 +15,12 @@ import (
 )
 
 type UserController struct {
-	userStore *database.UserStore
+	userStore   *database.UserStore
+	emailClient *email.EmailClient
 }
 
-func NewUserController(store *database.UserStore) *UserController {
-	return &UserController{userStore: store}
+func NewUserController(store *database.UserStore, emailClient *email.EmailClient) *UserController {
+	return &UserController{userStore: store, emailClient: emailClient}
 }
 
 func (uc *UserController) Signup(c *gin.Context) {
@@ -50,6 +53,12 @@ func (uc *UserController) Signup(c *gin.Context) {
 	}
 
 	token, err := auth.GenerateJWTToken(newUser)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	err = uc.emailClient.SendMail(request.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.GinError(err))
 		return
@@ -88,6 +97,23 @@ func (uc *UserController) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, ginToken(token))
+}
+
+func (u *UserController) VerifyEmail(c *gin.Context) {
+	var request struct {
+		OTP string `json:"otp" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, utils.GinError(err))
+		return
+	}
+
+	if request.OTP != "123456" {
+		c.JSON(http.StatusUnauthorized, utils.GinError(errors.New("Invalid OTP")))
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"email_verified": true})
 }
 
 func (uc *UserController) Logout(c *gin.Context) {

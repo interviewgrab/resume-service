@@ -2,10 +2,11 @@ package filestore
 
 import (
 	"bytes"
+	"io"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"io"
 )
 
 const bucket = "resume-service-filestore"
