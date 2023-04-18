@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"resume-service/internal/auth"
 	"resume-service/internal/clients/email"
 	"resume-service/internal/clients/filestore"
 	"resume-service/internal/clients/mlclient"
+	"resume-service/internal/clients/parameters"
 	"resume-service/internal/database"
 	"resume-service/internal/resume"
 	"resume-service/internal/user"
@@ -17,11 +19,37 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const (
+	KEY_MONGO_URI      = "MONGO_URI"
+	KEY_OPENAI_API_KEY = "OPENAI_API_KEY"
+	KEY_SENDER_EMAIL   = "SENDER_EMAIL"
+	KEY_SENDER_PASS    = "SENDER_PASS"
+)
+
+var service_params = []string{KEY_MONGO_URI, KEY_OPENAI_API_KEY, KEY_SENDER_EMAIL, KEY_SENDER_PASS}
+
 func main() {
 	err := godotenv.Load(".keys")
 	if err != nil {
 		log.Fatal("Cannot load env file", err)
 	}
+
+	paramClient, err := parameters.NewParamClient(os.Getenv("REGION"))
+	if err != nil {
+		log.Fatal("Cannot create param client", err)
+	}
+
+	for _, param := range service_params {
+		paramValue, err := paramClient.GetStringParam(param)
+		if err != nil {
+			log.Fatal("Cannot read param: %s", err)
+		}
+		err = os.Setenv(param, paramValue)
+		if err != nil {
+			log.Fatal("Cannot set param: %s", err)
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
