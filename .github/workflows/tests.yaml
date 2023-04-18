@@ -6,11 +6,11 @@ on:
 
 jobs:
     test:
-        name: Build docker
+        name: test
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
             - name: Build docker image
               run: docker build -t resume .
             - name: Run the test
-              run: docker run resume npm run test
+              run: docker run resume go test ./...
