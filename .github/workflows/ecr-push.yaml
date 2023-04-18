@@ -3,7 +3,7 @@ name: Push to ECR
 on:
   push:
     branches:
-    - master
+      - master
 
 jobs:
   ecr_push:
@@ -24,7 +24,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.event.number }}
+          IMAGE_TAG: ${{ GITHUB_SHA }}
           ECR_REPOSITORY: resume-service
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
