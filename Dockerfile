@@ -16,14 +16,8 @@ COPY . .
 # Build the Go app
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-# Start a new stage for the final image
-FROM alpine:latest
-
 # Set the working directory
 WORKDIR /app
-
-# Copy the binary from the builder stage
-COPY --from=builder /app/main /app/
 
 # Expose the port used by the application
 EXPOSE 8080

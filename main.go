@@ -31,22 +31,33 @@ var service_params = []string{KEY_MONGO_URI, KEY_OPENAI_API_KEY, KEY_SENDER_EMAI
 func main() {
 	err := godotenv.Load(".keys")
 	if err != nil {
-		log.Fatal("Cannot load env file", err)
+		log.Println("Cannot load env file", err)
+	}
+	err = godotenv.Load(".env")
+	if err != nil {
+		log.Println("Cannot load env file", err)
 	}
 
 	paramClient, err := parameters.NewParamClient(os.Getenv("REGION"))
 	if err != nil {
-		log.Fatal("Cannot create param client", err)
+		log.Println("Cannot create param client", err)
 	}
 
 	for _, param := range service_params {
 		paramValue, err := paramClient.GetStringParam(param)
 		if err != nil {
-			log.Fatal("Cannot read param: %s", err)
+			log.Println("Cannot read param: %s", err)
+		} else {
+			err = os.Setenv(param, paramValue)
+			if err != nil {
+				log.Println("Cannot set param: %s", err)
+			}
 		}
-		err = os.Setenv(param, paramValue)
-		if err != nil {
-			log.Fatal("Cannot set param: %s", err)
+	}
+
+	for _, param := range service_params {
+		if os.Getenv(param) == "" {
+			log.Fatalf("Param: %s not found", param)
 		}
 	}
 

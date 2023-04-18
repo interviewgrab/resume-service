@@ -117,15 +117,15 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 
 	// start defining cluster
 	cluster := awsecs.NewCluster(stack, jsii.String("resume-service-cluster"), &awsecs.ClusterProps{
-		Capacity: &awsecs.AddCapacityOptions{
-			InstanceType:    awsec2.InstanceType_Of(awsec2.InstanceClass_T2, awsec2.InstanceSize_MICRO),
-			MachineImage:    awsecs.EcsOptimizedImage_AmazonLinux2(awsecs.AmiHardwareType_STANDARD, &awsecs.EcsOptimizedImageOptions{CachedInContext: jsii.Bool(true)}),
-			DesiredCapacity: jsii.Number(1),
-			KeyName:         key.KeyName(),
-		},
 		Vpc: vpc,
 	})
-	cluster.Connections().AddSecurityGroup(sg)
+	capacity := cluster.AddCapacity(jsii.String("resume-service-capacity"), &awsecs.AddCapacityOptions{
+		InstanceType:    awsec2.InstanceType_Of(awsec2.InstanceClass_T2, awsec2.InstanceSize_MICRO),
+		MachineImage:    awsecs.EcsOptimizedImage_AmazonLinux2(awsecs.AmiHardwareType_STANDARD, &awsecs.EcsOptimizedImageOptions{CachedInContext: jsii.Bool(true)}),
+		DesiredCapacity: jsii.Number(1),
+		KeyName:         key.KeyName(),
+	})
+	capacity.AddSecurityGroup(sg)
 
 	// TODO separate task role
 	taskDef := awsecs.NewEc2TaskDefinition(stack, jsii.String("resume-service-task"), &awsecs.Ec2TaskDefinitionProps{
