@@ -3,13 +3,16 @@ name: Push to ECR
 on:
   push:
     branches:
-      - master
+    - master
 
 jobs:
   ecr_push:
     name: Push image to ECR
     runs-on: ubuntu-latest
     steps:
+      - name: Dump GitHub context
+        id: github_context_step
+        run: echo '${{ toJSON(github) }}'
       - uses: actions/checkout@v3
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -24,7 +27,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ GITHUB_SHA }}
+          IMAGE_TAG: ${{ github.sha }}
           ECR_REPOSITORY: resume-service
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
