@@ -1,0 +1,11 @@
+{
+  "availability-zones:account=550610942901:region=us-east-1": [
+    "us-east-1a",
+    "us-east-1b",
+    "us-east-1c",
+    "us-east-1d",
+    "us-east-1e",
+    "us-east-1f"
+  ],
+  "ssm:account=550610942901:parameterName=/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id:region=us-east-1": "ami-05339d597592d45cf"
+}
