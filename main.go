@@ -46,11 +46,11 @@ func main() {
 	for _, param := range service_params {
 		paramValue, err := paramClient.GetStringParam(param)
 		if err != nil {
-			log.Println("Cannot read param: %s", err)
+			log.Println("Cannot read param: ", err)
 		} else {
 			err = os.Setenv(param, paramValue)
 			if err != nil {
-				log.Println("Cannot set param: %s", err)
+				log.Println("Cannot set param: ", err)
 			}
 		}
 	}
@@ -121,7 +121,7 @@ func main() {
 	}
 
 	// Start server
-	err = r.Run("localhost:8080")
+	err = r.Run("0.0.0.0:8080")
 	if err != nil {
 		log.Fatal("Error starting server", err)
 	}

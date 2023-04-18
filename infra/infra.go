@@ -104,7 +104,7 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 	ssmPolicyStatement := awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Effect: awsiam.Effect_ALLOW,
 		Actions: &[]*string{
-			jsii.String("ssm:GetParameters"),
+			jsii.String("ssm:GetParameter"),
 		},
 		Resources: &[]*string{
 			builder.Arn("MONGO_URI"),
@@ -126,7 +126,6 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 		KeyName:         key.KeyName(),
 	})
 	capacity.AddSecurityGroup(sg)
-
 	// TODO separate task role
 	taskDef := awsecs.NewEc2TaskDefinition(stack, jsii.String("resume-service-task"), &awsecs.Ec2TaskDefinitionProps{
 		NetworkMode:   awsecs.NetworkMode_BRIDGE,
