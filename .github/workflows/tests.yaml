@@ -1,0 +1,16 @@
+name: Run unit tests
+
+on:
+    pull_request:
+        branches: [master]
+
+jobs:
+    test:
+        name: Build docker
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Build docker image
+              run: docker build -t resume .
+            - name: Run the test
+              run: docker run resume npm run test
