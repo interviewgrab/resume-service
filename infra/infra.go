@@ -124,8 +124,8 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 		Vpc: vpc,
 	})
 	capacity := cluster.AddCapacity(jsii.String("resume-service-capacity"), &awsecs.AddCapacityOptions{
-		InstanceType:    awsec2.InstanceType_Of(awsec2.InstanceClass_T2, awsec2.InstanceSize_MICRO),
-		MachineImage:    awsecs.EcsOptimizedImage_AmazonLinux2(awsecs.AmiHardwareType_STANDARD, &awsecs.EcsOptimizedImageOptions{CachedInContext: jsii.Bool(true)}),
+		InstanceType:    awsec2.InstanceType_Of(awsec2.InstanceClass_T4G, awsec2.InstanceSize_SMALL),
+		MachineImage:    awsecs.EcsOptimizedImage_AmazonLinux2(awsecs.AmiHardwareType_ARM, &awsecs.EcsOptimizedImageOptions{CachedInContext: jsii.Bool(true)}),
 		DesiredCapacity: jsii.Number(1),
 		KeyName:         key.KeyName(),
 	})
