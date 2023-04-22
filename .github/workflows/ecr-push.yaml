@@ -9,6 +9,8 @@ jobs:
   ecr_push:
     name: Push image to ECR
     runs-on: ubuntu-latest
+    env:
+      DOCKER_TARGET_PLATFORM: linux/arm/v7
     steps:
       - name: Dump GitHub context
         id: github_context_step

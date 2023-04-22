@@ -7,5 +7,6 @@
     "us-east-1e",
     "us-east-1f"
   ],
-  "ssm:account=550610942901:parameterName=/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id:region=us-east-1": "ami-05339d597592d45cf"
+  "ssm:account=550610942901:parameterName=/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id:region=us-east-1": "ami-05339d597592d45cf",
+  "ssm:account=550610942901:parameterName=/aws/service/ecs/optimized-ami/amazon-linux-2/arm64/recommended/image_id:region=us-east-1": "ami-0b780ff83c13ed81c"
 }
