@@ -16,8 +16,12 @@ COPY . .
 # Build the Go app
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
+FROM alpine:latest
+
 # Set the working directory
 WORKDIR /app
+
+COPY --from=builder /app /app/
 
 # Expose the port used by the application
 EXPOSE 8080
