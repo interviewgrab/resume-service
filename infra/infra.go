@@ -154,7 +154,7 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 	})
 
 	certificate := awscertificatemanager.NewCertificate(stack, jsii.String("certificate"), &awscertificatemanager.CertificateProps{
-		DomainName: jsii.String("interviewgrab.tech"),
+		DomainName: jsii.String("api.interviewgrab.tech"),
 		Validation: awscertificatemanager.CertificateValidation_FromDns(awsroute53.HostedZone_FromHostedZoneId(stack, jsii.String("resume-service-zone"), jsii.String("Z07921103DN76C22NES28"))),
 	})
 
@@ -169,8 +169,7 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 		Targets:  &[]elbv2.INetworkLoadBalancerTarget{service},
 	}
 	loadBalancer.AddListener(jsii.String("resume-service-http-listener"), &elbv2.BaseNetworkListenerProps{
-		Port:         jsii.Number(80),
-		Certificates: &[]elbv2.IListenerCertificate{certificate},
+		Port: jsii.Number(80),
 	}).AddTargets(jsii.String("resume-service-http-tgt"), &tgtProps)
 	loadBalancer.AddListener(jsii.String("resume-service-https-listener"), &elbv2.BaseNetworkListenerProps{
 		Port:         jsii.Number(443),
