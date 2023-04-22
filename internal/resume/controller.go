@@ -209,14 +209,14 @@ func (r *ResumeController) GenerateCoverletter(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse resume text"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"cover_letter": resumeText})
+	//c.JSON(http.StatusOK, gin.H{"cover_letter": resumeText})
 
 	// Generate the cover letter
-	//coverLetter, err := r.mlclient.GenerateCoverLetter(c, request.JobDesc, resumeText)
-	//if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate cover letter"})
-	//	return
-	//}
-	//
-	//c.JSON(http.StatusOK, gin.H{"cover_letter": coverLetter})
+	coverLetter, err := r.mlclient.GenerateCoverLetter(c, request.JobDesc, resumeText)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate cover letter"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"cover_letter": coverLetter})
 }
