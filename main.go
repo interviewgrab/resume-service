@@ -12,6 +12,7 @@ import (
 	"resume-service/internal/database"
 	"resume-service/internal/resume"
 	"resume-service/internal/user"
+	"resume-service/internal/utils"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -19,14 +20,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const (
-	KEY_MONGO_URI      = "MONGO_URI"
-	KEY_OPENAI_API_KEY = "OPENAI_API_KEY"
-	KEY_SENDER_EMAIL   = "SENDER_EMAIL"
-	KEY_SENDER_PASS    = "SENDER_PASS"
-)
-
-var service_params = []string{KEY_MONGO_URI, KEY_OPENAI_API_KEY, KEY_SENDER_EMAIL, KEY_SENDER_PASS}
+var service_params = []string{utils.KEY_MONGO_URI, utils.KEY_OPENAI_API_KEY, utils.KEY_SENDER_EMAIL, utils.KEY_SENDER_PASS}
 
 func main() {
 	err := godotenv.Load(".keys")

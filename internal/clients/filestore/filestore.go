@@ -2,7 +2,10 @@ package filestore
 
 import (
 	"bytes"
+	"github.com/aws/jsii-runtime-go"
 	"io"
+	"os"
+	"resume-service/internal/utils"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,8 +19,9 @@ type FileStore struct {
 }
 
 func NewStorageClient() *FileStore {
+	region := os.Getenv(utils.KEY_REGION)
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
+		Config: aws.Config{Region: jsii.String(region)},
 	}))
 	return &FileStore{s3: s3.New(sess)}
 }

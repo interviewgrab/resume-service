@@ -1,0 +1,9 @@
+package utils
+
+const (
+	KEY_MONGO_URI      = "MONGO_URI"
+	KEY_OPENAI_API_KEY = "OPENAI_API_KEY"
+	KEY_SENDER_EMAIL   = "SENDER_EMAIL"
+	KEY_SENDER_PASS    = "SENDER_PASS"
+	KEY_REGION         = "REGION"
+)
