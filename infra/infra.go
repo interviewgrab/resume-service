@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscertificatemanager"
+	elbv2 "github.com/aws/aws-cdk-go/awscdk/v2/awselasticloadbalancingv2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
 	"log"
 	"os"
 
@@ -140,19 +143,39 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 		PortMappings: &[]*awsecs.PortMapping{
 			{
 				ContainerPort: jsii.Number(8080),
-				HostPort:      jsii.Number(80),
-			},
-			{
-				ContainerPort: jsii.Number(8080),
 				HostPort:      jsii.Number(443),
 			},
 		},
 	})
 
-	_ = awsecs.NewEc2Service(stack, jsii.String("resume-service-ec2service"), &awsecs.Ec2ServiceProps{
+	service := awsecs.NewEc2Service(stack, jsii.String("resume-service-ec2service"), &awsecs.Ec2ServiceProps{
 		Cluster:        cluster,
 		TaskDefinition: taskDef,
 	})
+
+	certificate := awscertificatemanager.NewCertificate(stack, jsii.String("certificate"), &awscertificatemanager.CertificateProps{
+		DomainName: jsii.String("interviewgrab.tech"),
+		Validation: awscertificatemanager.CertificateValidation_FromDns(awsroute53.HostedZone_FromHostedZoneId(stack, jsii.String("resume-service-zone"), jsii.String("Z07921103DN76C22NES28"))),
+	})
+
+	// setup loadbalancer for the ECS service
+	loadBalancer := elbv2.NewNetworkLoadBalancer(stack, jsii.String("loadBalancer"), &elbv2.NetworkLoadBalancerProps{
+		Vpc:            vpc,
+		InternetFacing: jsii.Bool(true),
+	})
+	tgtProps := elbv2.AddNetworkTargetsProps{
+		Protocol: elbv2.Protocol_TCP,
+		Port:     jsii.Number(443),
+		Targets:  &[]elbv2.INetworkLoadBalancerTarget{service},
+	}
+	loadBalancer.AddListener(jsii.String("resume-service-http-listener"), &elbv2.BaseNetworkListenerProps{
+		Port:         jsii.Number(80),
+		Certificates: &[]elbv2.IListenerCertificate{certificate},
+	}).AddTargets(jsii.String("resume-service-http-tgt"), &tgtProps)
+	loadBalancer.AddListener(jsii.String("resume-service-https-listener"), &elbv2.BaseNetworkListenerProps{
+		Port:         jsii.Number(443),
+		Certificates: &[]elbv2.IListenerCertificate{certificate},
+	}).AddTargets(jsii.String("resume-service-https-tgt"), &tgtProps)
 	return stack
 }
 
