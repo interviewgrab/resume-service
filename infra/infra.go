@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscertificatemanager"
 	elbv2 "github.com/aws/aws-cdk-go/awscdk/v2/awselasticloadbalancingv2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
 	"log"
 	"os"
 
@@ -46,6 +47,15 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 
 	// service S3
 	s3 := awss3.Bucket_FromBucketName(stack, jsii.String("resume-service-bucket"), jsii.String("resume-service-filestore"))
+
+	// hosted zone
+	zone := awsroute53.HostedZone_FromHostedZoneId(stack, jsii.String("resume-service-zone"), jsii.String("Z07921103DN76C22NES28"))
+
+	// backend api certificate for subdomain
+	certificate := awscertificatemanager.NewCertificate(stack, jsii.String("certificate"), &awscertificatemanager.CertificateProps{
+		DomainName: jsii.String("api.interviewgrab.tech"),
+		Validation: awscertificatemanager.CertificateValidation_FromDns(zone),
+	})
 
 	// common infra
 	vpc := awsec2.NewVpc(stack, jsii.String("resume-service-vpc"), &awsec2.VpcProps{
@@ -153,11 +163,6 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 		TaskDefinition: taskDef,
 	})
 
-	certificate := awscertificatemanager.NewCertificate(stack, jsii.String("certificate"), &awscertificatemanager.CertificateProps{
-		DomainName: jsii.String("api.interviewgrab.tech"),
-		Validation: awscertificatemanager.CertificateValidation_FromDns(awsroute53.HostedZone_FromHostedZoneId(stack, jsii.String("resume-service-zone"), jsii.String("Z07921103DN76C22NES28"))),
-	})
-
 	// setup loadbalancer for the ECS service
 	loadBalancer := elbv2.NewNetworkLoadBalancer(stack, jsii.String("loadBalancer"), &elbv2.NetworkLoadBalancerProps{
 		Vpc:            vpc,
@@ -175,6 +180,12 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 		Port:         jsii.Number(443),
 		Certificates: &[]elbv2.IListenerCertificate{certificate},
 	}).AddTargets(jsii.String("resume-service-https-tgt"), &tgtProps)
+
+	// expose load balancer via route53 A record for api.interviewgrab.tech
+	awsroute53.NewARecord(stack, jsii.String("interviewgrab-api-ARecord"), &awsroute53.ARecordProps{
+		Zone:   zone,
+		Target: awsroute53.RecordTarget_FromAlias(awsroute53targets.NewLoadBalancerTarget(loadBalancer)),
+	})
 	return stack
 }
 
