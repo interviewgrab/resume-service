@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscertificatemanager"
 	elbv2 "github.com/aws/aws-cdk-go/awscdk/v2/awselasticloadbalancingv2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
-	"log"
-	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
@@ -49,7 +50,13 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 	s3 := awss3.Bucket_FromBucketName(stack, jsii.String("resume-service-bucket"), jsii.String("resume-service-filestore"))
 
 	// hosted zone
-	zone := awsroute53.HostedZone_FromHostedZoneId(stack, jsii.String("resume-service-zone"), jsii.String("Z07921103DN76C22NES28"))
+	zone := awsroute53.HostedZone_FromHostedZoneAttributes(stack,
+		jsii.String("resume-service-zone"),
+		&awsroute53.HostedZoneAttributes{
+			HostedZoneId: jsii.String("Z07921103DN76C22NES28"),
+			ZoneName:     jsii.String("interviewgrab.tech"),
+		},
+	)
 
 	// backend api certificate for subdomain
 	certificate := awscertificatemanager.NewCertificate(stack, jsii.String("certificate"), &awscertificatemanager.CertificateProps{
