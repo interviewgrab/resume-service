@@ -190,8 +190,9 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 
 	// expose load balancer via route53 A record for api.interviewgrab.tech
 	awsroute53.NewARecord(stack, jsii.String("interviewgrab-api-ARecord"), &awsroute53.ARecordProps{
-		Zone:   zone,
-		Target: awsroute53.RecordTarget_FromAlias(awsroute53targets.NewLoadBalancerTarget(loadBalancer)),
+		Zone:           zone,
+		DeleteExisting: jsii.Bool(true),
+		Target:         awsroute53.RecordTarget_FromAlias(awsroute53targets.NewLoadBalancerTarget(loadBalancer)),
 	})
 	return stack
 }
