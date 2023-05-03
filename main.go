@@ -104,14 +104,20 @@ func main() {
 		userAuthedRoutes.GET("/resend-otp", userController.ResendOTP)
 	}
 
-	resumeRoutes := r.Group("/api", auth.Middleware(), auth.EmailVerified(&store.User))
+	resumeAuthedRoutes := r.Group("/api", auth.Middleware(), auth.EmailVerified(&store.User))
 	{
-		resumeRoutes.PUT("/upload-resume", resumeController.UploadResume)
-		resumeRoutes.GET("/list-resumes", resumeController.ListResumes)
-		resumeRoutes.GET("/download-resume/:resume_id", resumeController.DownloadResume)
-		resumeRoutes.DELETE("/delete-resume/:resume_id", resumeController.DeleteResume)
-		resumeRoutes.POST("/update-resume-visibility/:resume_id", resumeController.UpdateResumeVisibility)
-		resumeRoutes.POST("/generate-cover-letter", resumeController.GenerateCoverletter)
+		resumeAuthedRoutes.PUT("/upload-resume", resumeController.UploadResume)
+		resumeAuthedRoutes.GET("/list-resumes", resumeController.ListResumes)
+		resumeAuthedRoutes.GET("/download-resume/:resume_id", resumeController.DownloadResume)
+		resumeAuthedRoutes.DELETE("/delete-resume/:resume_id", resumeController.DeleteResume)
+		resumeAuthedRoutes.POST("/update-resume-visibility/:resume_id", resumeController.UpdateResumeVisibility)
+		resumeAuthedRoutes.POST("/generate-cover-letter", resumeController.GenerateCoverletter)
+	}
+
+	resumePublicRoutes := r.Group("/api", auth.Middleware(), auth.EmailVerified(&store.User))
+	{
+		resumePublicRoutes.PUT("/upload-resume-public", resumeController.UploadResumePublic)
+		resumeAuthedRoutes.POST("/generate-cover-letter-public", resumeController.GenerateCoverletterPublic)
 	}
 
 	// Start server

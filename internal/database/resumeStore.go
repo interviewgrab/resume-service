@@ -11,18 +11,24 @@ import (
 )
 
 type ResumeStore struct {
-	collection *mongo.Collection
+	collection           *mongo.Collection
+	tempResumeCollection *mongo.Collection
 }
 
 const resumeCollection = "resumeCollection"
+const tempResumeCollection = "tempResumeCollection"
 
 func newResumeStore(ctx context.Context, dbClient *mongo.Database) (ResumeStore, error) {
 	collection := dbClient.Collection(resumeCollection)
+	tempResumeCollection := dbClient.Collection(tempResumeCollection)
 	err := createResumeIndexes(ctx, collection)
 	if err != nil {
 		return ResumeStore{}, err
 	}
-	return ResumeStore{collection: collection}, nil
+	return ResumeStore{
+		collection:           collection,
+		tempResumeCollection: tempResumeCollection,
+	}, nil
 }
 
 func createResumeIndexes(ctx context.Context, collection *mongo.Collection) error {
@@ -53,6 +59,28 @@ func (s *ResumeStore) GetResume(ctx context.Context, id string) (model.Resume, e
 	err = s.collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(resume)
 	if err != nil {
 		return model.Resume{}, err
+	}
+	return *resume, err
+}
+
+func (s *ResumeStore) StoreTemporaryResume(ctx context.Context, resume model.TemporaryResume) (model.TemporaryResume, error) {
+	storeResult, err := s.tempResumeCollection.InsertOne(ctx, resume)
+	if err != nil {
+		return model.TemporaryResume{}, err
+	}
+	resume.ID = storeResult.InsertedID.(primitive.ObjectID)
+	return resume, err
+}
+
+func (s *ResumeStore) GetTemporaryResume(ctx context.Context, id string) (model.TemporaryResume, error) {
+	resume := &model.TemporaryResume{}
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return model.TemporaryResume{}, err
+	}
+	err = s.tempResumeCollection.FindOne(ctx, bson.M{"_id": objectId}).Decode(resume)
+	if err != nil {
+		return model.TemporaryResume{}, err
 	}
 	return *resume, err
 }

@@ -15,3 +15,10 @@ type Resume struct {
 	Tags       []string           `bson:"tags,omitempty" json:"tags"`
 	Public     bool               `bson:"public,required" json:"public"`
 }
+
+type TemporaryResume struct {
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	FileName   string             `bson:"file_name,required" json:"file_name"`
+	Key        string             `bson:"key,required" json:"key"`
+	UploadDate time.Time          `bson:"upload_date,required" json:"upload_date"`
+}

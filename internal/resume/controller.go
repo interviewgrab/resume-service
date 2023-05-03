@@ -88,6 +88,53 @@ func (r *ResumeController) UploadResume(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"resume": resume})
 }
 
+func (r *ResumeController) UploadResumePublic(c *gin.Context) {
+	var request struct {
+		File *multipart.FileHeader `form:"file"`
+	}
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+	file, err := request.File.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	fileContent, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	key := fmt.Sprintf("temp-%s-%s", uuid.New(), uuid.New())
+
+	err = r.fileStorage.Upload(key, fileContent)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+	resume := model.TemporaryResume{
+		FileName:   request.File.Filename,
+		Key:        key,
+		UploadDate: time.Now(),
+	}
+
+	resume, err = r.resumeStore.StoreTemporaryResume(c, resume)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"resume": resume})
+}
+
 func (r *ResumeController) ListResumes(c *gin.Context) {
 	userId := auth.GetUserIdFromContext(c)
 
@@ -193,6 +240,53 @@ func (r *ResumeController) GenerateCoverletter(c *gin.Context) {
 	// verify if user can read this resume
 	if resume.UserID != auth.GetUserIdFromContext(c) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// download PDF from S3
+	fileContent, err := r.fileStorage.Download(resume.Key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
+		return
+	}
+
+	// Extract text from the PDF
+	resumeText, err := parsePDF(fileContent)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse resume text"})
+		return
+	}
+	//c.JSON(http.StatusOK, gin.H{"cover_letter": resumeText})
+
+	// Generate the cover letter
+	coverLetter, err := r.mlclient.GenerateCoverLetter(c, request.JobDesc, resumeText)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate cover letter"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"cover_letter": coverLetter})
+}
+
+func (r *ResumeController) GenerateCoverletterPublic(c *gin.Context) {
+	var request struct {
+		ResumeId string `json:"resume_id"`
+		JobDesc  string `json:"job_desc"`
+	}
+
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, utils.GinError(err))
+		return
+	}
+
+	if request.ResumeId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Resume ID and Job Description are required"})
+		return
+	}
+
+	resume, err := r.resumeStore.GetTemporaryResume(c, request.ResumeId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.GinError(err))
 		return
 	}
 
