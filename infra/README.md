@@ -46,7 +46,9 @@ create a new folder named `infra` inside your project dir
 1. if never done: `cdk bootstrap`
 2. `cdk deploy`
 
-## To deploy new project:
+## To deploy code changes:
+0. Login to AWS via this link: https://d-9067b5bbe4.awsapps.com/start and get keys
+0. run `aws-cli configure` and put your AWS keys here
 1. cd infra
 2. export DEPLOY_COMMIT="the commit you want to deploy"
 3. cdk deploy
