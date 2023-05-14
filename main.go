@@ -117,7 +117,7 @@ func main() {
 	resumePublicRoutes := r.Group("/api")
 	{
 		resumePublicRoutes.PUT("/upload-resume-public", resumeController.UploadResumePublic)
-		resumeAuthedRoutes.POST("/generate-cover-letter-public", resumeController.GenerateCoverletterPublic)
+		resumePublicRoutes.POST("/generate-cover-letter-public", resumeController.GenerateCoverletterPublic)
 	}
 
 	// Start server
