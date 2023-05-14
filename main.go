@@ -114,7 +114,7 @@ func main() {
 		resumeAuthedRoutes.POST("/generate-cover-letter", resumeController.GenerateCoverletter)
 	}
 
-	resumePublicRoutes := r.Group("/api", auth.Middleware(), auth.EmailVerified(&store.User))
+	resumePublicRoutes := r.Group("/api")
 	{
 		resumePublicRoutes.PUT("/upload-resume-public", resumeController.UploadResumePublic)
 		resumeAuthedRoutes.POST("/generate-cover-letter-public", resumeController.GenerateCoverletterPublic)
